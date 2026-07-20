@@ -1,0 +1,226 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>BEACON</title>
+<style>
+:root{--bg:#07090d;--ink:#fff;--ink2:#b0b8c4;--muted:#636b77;--brand:#22d3ee;--sabre:#3987e5;--chlar:#d95926;--good:#19b219;--warn:#f5a524;
+ --mono:ui-monospace,"DejaVu Sans Mono",Menlo,Consolas,monospace;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);overflow:hidden}
+.beam{position:fixed;inset:-40% -40% -40% -40%;z-index:0;pointer-events:none;opacity:.35;
+ background:conic-gradient(from 210deg at 72% -6%,transparent 0deg,rgba(34,211,238,.14) 18deg,transparent 40deg,transparent 360deg);
+ animation:sweep 18s linear infinite;transform-origin:72% -6%}
+@keyframes sweep{to{transform:rotate(360deg)}}
+.vign{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(0,0,0,.6))}
+.deck{position:relative;z-index:2;height:100%}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+ padding:min(9vw,120px);opacity:0;transform:translateY(18px);pointer-events:none;transition:opacity .5s ease,transform .5s ease}
+.slide.on{opacity:1;transform:none;pointer-events:auto}
+.slide.center{align-items:center;text-align:center}
+.eyebrow{font-family:var(--mono);font-size:clamp(10px,1.3vw,12px);letter-spacing:.32em;text-transform:uppercase;color:var(--muted);margin-bottom:20px}
+.big{font-size:clamp(34px,6.5vw,78px);font-weight:800;letter-spacing:-.03em;line-height:.96;max-width:18ch}
+.lede{font-size:clamp(16px,2.2vw,24px);color:var(--ink2);max-width:28ch;margin-top:18px;line-height:1.45;font-weight:400}
+.body{font-size:clamp(14px,1.8vw,18px);color:var(--ink2);max-width:36ch;margin-top:16px;line-height:1.6}
+.hint{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:6;font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+/* wordmark */
+.wm{display:flex;align-items:center;gap:14px}
+.wm .glyph{width:clamp(28px,4.5vw,48px);height:clamp(28px,4.5vw,48px);border-radius:50%;position:relative;flex:none;
+ background:radial-gradient(circle at 50% 50%,#eafcff,var(--brand) 42%,rgba(34,211,238,.12) 70%,transparent);box-shadow:0 0 30px rgba(34,211,238,.4)}
+.wm h1{font-size:clamp(44px,9vw,100px);font-weight:800;letter-spacing:-.04em;line-height:1}
+/* stack section */
+.stack{display:grid;grid-template-columns:1fr 1fr;gap:clamp(20px,4vw,48px);width:100%;margin-top:10px}
+.stack-col h3{font-family:var(--mono);font-size:clamp(11px,1.3vw,13px);letter-spacing:.24em;text-transform:uppercase;color:var(--brand);margin-bottom:14px}
+.stack-col .bar{height:2px;width:36px;background:var(--brand);border-radius:1px;margin-bottom:16px;opacity:.6}
+.stack-col p{font-size:clamp(13px,1.5vw,15px);color:var(--ink2);line-height:1.65;font-family:var(--sans)}
+.stack-col code{font-family:var(--mono);font-size:.92em;color:var(--ink);background:rgba(255,255,255,.06);padding:1px 5px;border-radius:3px}
+/* loop */
+.loop{display:flex;align-items:center;gap:clamp(8px,1.5vw,16px);flex-wrap:wrap;margin-top:16px}
+.loop-step{font-family:var(--mono);font-size:clamp(12px,1.5vw,15px);color:var(--ink);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);padding:8px 14px;border-radius:8px}
+.loop-arrow{color:var(--muted);font-size:clamp(14px,1.8vw,18px)}
+.loop-step.active{border-color:var(--brand);color:var(--brand);box-shadow:0 0 12px rgba(34,211,238,.15)}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(14px,2.5vw,36px);width:100%;margin-top:8px}
+.stat .v{font-size:clamp(22px,3.5vw,44px);font-weight:800;letter-spacing:-.02em;line-height:1}
+.stat .v small{color:var(--brand)} .stat .l{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:10px}
+/* hear it */
+.hear{display:grid;grid-template-columns:260px 1fr;gap:clamp(20px,3.5vw,48px);align-items:center;width:100%;max-width:920px}
+.hcov{width:100%;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.06);display:block}
+.hmeta{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:12px 0 16px}
+.scwrap{width:100%}
+.scnote{display:none;font-family:var(--mono);font-size:11px;color:#04120a;background:var(--warn);padding:7px 11px;border-radius:7px;margin-bottom:8px}
+.scnote.show{display:block}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;
+ padding:11px 18px;border-radius:9px;text-decoration:none;cursor:pointer;border:0}
+.btn.pri{background:var(--brand);color:#04120a}
+/* receipt */
+.stamp{display:inline-flex;align-items:center;gap:10px;border:1.5px solid var(--good);color:var(--good);border-radius:10px;padding:12px 18px;
+ font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;font-weight:700;font-size:clamp(13px,1.8vw,17px);margin-top:6px;
+ box-shadow:0 0 24px rgba(25,178,25,.2)}
+.cmp{display:grid;gap:10px;margin-top:22px;width:100%;max-width:480px}
+.crow{display:grid;grid-template-columns:110px 1fr 80px;gap:12px;align-items:center}
+.crow .cl{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.crow .cv{font-family:var(--mono);font-size:11px;color:var(--ink2);text-align:right}
+.mini{height:20px} .mini svg{width:100%;height:20px;display:block}
+.reflg{display:flex;gap:16px;margin-top:16px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.reflg span{display:inline-flex;align-items:center;gap:6px}.sw{width:9px;height:9px;border-radius:2px}
+/* close */
+.contact{font-family:var(--mono);font-size:clamp(12px,1.5vw,14px);letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-top:22px}
+.contact a{color:var(--ink2);text-decoration:none}
+.contact a:hover{color:var(--brand)}
+/* chrome */
+.brandtag{position:fixed;top:22px;left:26px;z-index:6;display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.brandtag i{width:10px;height:10px;border-radius:50%;background:radial-gradient(circle,#eafcff,var(--brand) 45%,transparent 72%);box-shadow:0 0 12px var(--brand)}
+.count{position:fixed;top:22px;right:26px;z-index:6;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--muted)}
+.dots{position:fixed;bottom:24px;right:26px;z-index:6;display:flex;gap:8px}
+.dots b{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.18);cursor:pointer;transition:.25s;border:0;padding:0}
+.dots b.on{background:var(--brand);box-shadow:0 0 8px var(--brand);transform:scale(1.12)}
+.nav{position:fixed;bottom:20px;left:26px;z-index:6;display:flex;gap:7px}
+.nav button{width:36px;height:32px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:var(--ink);font-size:15px;cursor:pointer}
+.nav button:hover{background:rgba(34,211,238,.1);border-color:var(--brand)}
+@media(max-width:760px){.stack,.stats{grid-template-columns:1fr;gap:14px}.hear{grid-template-columns:1fr;max-width:380px}.hcov{width:160px}
+ .crow{grid-template-columns:90px 1fr}.crow .cv{display:none}.brandtag span{display:none}.loop{gap:6px}}
+</style></head>
+<body>
+<div class="beam"></div><div class="vign"></div>
+<div class="brandtag"><i></i><span>BEACON</span></div>
+<div class="count" id="count">01 / 07</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 · TITLE -->
+  <section class="slide center on">
+    <div class="wm"><span class="glyph"></span><h1>BEACON</h1></div>
+    <div class="lede">Methodology feedback for producers who know what they're chasing.</div>
+  </section>
+
+  <!-- 2 · THE GAP -->
+  <section class="slide">
+    <div class="eyebrow">the gap</div>
+    <div class="big">You finish a bounce at 3am.</div>
+    <div class="body">Is it loud enough for a big room? Mono-safe on the subs? Does the spectral balance sit where the label you're aiming at actually lives? You can watch a masterclass ten times and still not know if you applied it right. There's no feedback between the lesson and the session.</div>
+  </section>
+
+  <!-- 3 · THE STACK -->
+  <section class="slide">
+    <div class="eyebrow">the stack</div>
+    <div class="big" style="font-size:clamp(30px,5vw,56px);margin-bottom:24px">What's actually built.</div>
+    <div class="stack">
+      <div class="stack-col">
+        <div class="bar"></div>
+        <h3>Local · Python</h3>
+        <p>A parser that reads your Ableton <code>.als</code> project file (gzipped XML) and your bounced <code>.wav</code>. Extracts every track, device chain, plugin parameter, routing, grouping, groove pool setting. Audio analysis via <code>librosa</code>: loudness, 7-band spectrum, stereo field, transient profile, sidechain depth, crest factor.</p>
+        <p style="margin-top:10px">Output: one structured JSON. What's actually in the session, not what you think is in the session.</p>
+      </div>
+      <div class="stack-col">
+        <div class="bar"></div>
+        <h3>AI agent · evaluation</h3>
+        <p>The JSON is evaluated by an AI agent (Claude, Anthropic) loaded with a complete methodology reference — documented signal chains, confirmed plugin parameters, arrangement philosophy, spectral targets.</p>
+        <p style="margin-top:10px">The agent compares your session state against the methodology and flags divergences: wrong Overdrive frequency, missing bus processing, spectral centroid drifting from the reference profile. Priority-ordered. Specific. Actionable.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · THE LOOP -->
+  <section class="slide">
+    <div class="eyebrow">the workflow</div>
+    <div class="big" style="font-size:clamp(30px,5vw,56px);margin-bottom:20px">Bounce. Parse. Fix. Repeat.</div>
+    <div class="loop">
+      <div class="loop-step">Bounce</div>
+      <div class="loop-arrow">→</div>
+      <div class="loop-step">Parse .als + .wav</div>
+      <div class="loop-arrow">→</div>
+      <div class="loop-step">JSON</div>
+      <div class="loop-arrow">→</div>
+      <div class="loop-step active">Agent evaluates</div>
+      <div class="loop-arrow">→</div>
+      <div class="loop-step">One fix</div>
+      <div class="loop-arrow">↩</div>
+    </div>
+    <div class="body" style="max-width:42ch">Single-variable per bounce. Each change isolated and measurable. Delta tracking across iterations shows whether the move worked — not whether it felt like it worked. The agent doesn't generate music or make creative decisions. It reads your session and tells you where you diverged from the methodology you chose to follow.</div>
+  </section>
+
+  <!-- 5 · PROOF -->
+  <section class="slide">
+    <div class="eyebrow">proof · sabre</div>
+    <div class="big" style="font-size:clamp(30px,5vw,56px);margin-bottom:28px">One track, built with it.</div>
+    <div class="stats">
+      <div class="stat"><div class="v">9 bars <small>→</small> 185</div><div class="l">flat loop → full arrangement</div></div>
+      <div class="stat"><div class="v">8 <small>bounces</small></div><div class="l">each scored against 12 targets</div></div>
+      <div class="stat"><div class="v">–9.66 <small>LUFS</small></div><div class="l">club-ready · shipped</div></div>
+    </div>
+  </section>
+
+  <!-- 6 · RECEIPT -->
+  <section class="slide">
+    <div class="eyebrow">reference-matched</div>
+    <div class="big" style="font-size:clamp(28px,4.5vw,50px)">Held against a real release.</div>
+    <div class="reflg"><span><i class="sw" style="background:var(--sabre)"></i>Sabre (FEB)</span><span><i class="sw" style="background:var(--chlar)"></i>Chlär reference</span></div>
+    <div class="cmp" id="cmp"></div>
+    <div style="margin-top:22px"><span class="stamp">✓ Club-ready: pass</span></div>
+  </section>
+
+  <!-- 7 · CLOSE -->
+  <section class="slide center">
+    <div class="wm" style="margin-bottom:16px"><span class="glyph" style="width:20px;height:20px"></span><h1 style="font-size:clamp(28px,5vw,48px)">BEACON</h1></div>
+    <div class="body" style="text-align:center;max-width:34ch">Sabre was made in a bedroom in Sheffield in one afternoon. No studio, no engineer, no label behind it. Just the tool and one masterclass taken too seriously.</div>
+    <div style="margin-top:24px">
+      <a class="btn pri" id="scLink" href="#" target="_blank" rel="noopener">▶ Listen to Sabre</a>
+    </div>
+    <div class="contact" style="margin-top:22px">FEB · Sheffield</div>
+  </section>
+
+</div>
+
+<div class="hint" id="hint">press → or scroll</div>
+<div class="nav"><button id="prev">‹</button><button id="next">›</button></div>
+<div class="dots" id="dots"></div>
+
+<script>
+/* ===== CONFIG ===== */
+const SC_URL  = "https://soundcloud.com/feb-audio/sabre";
+/* ================== */
+
+(function(){
+  const link = document.getElementById('scLink');
+  if(SC_URL) link.href = SC_URL;
+  else link.style.opacity = '.4';
+})();
+
+// comparison bars
+const R=[
+  {n:"Punch · crest",s:9.71,c:7.71,lo:6.5,hi:10.5,v:"harder"},
+  {n:"Loudness",s:-9.66,c:-7.54,lo:-10.5,hi:-6.5,v:"more headroom"},
+  {n:"Brightness",s:2987,c:3278,lo:2400,hi:3400,v:"in pocket"},
+  {n:"Correlation",s:0.982,c:0.978,lo:0.9,hi:1.0,v:"matched"}
+];
+const cmp=document.getElementById('cmp');
+R.forEach(r=>{
+  const px=v=>4+92*(v-r.lo)/(r.hi-r.lo);
+  const row=document.createElement('div');row.className='crow';
+  row.innerHTML=`<div class="cl">${r.n}</div><div class="mini"><svg viewBox="0 0 100 20" preserveAspectRatio="none">
+    <line x1="4" y1="10" x2="96" y2="10" stroke="rgba(255,255,255,.1)"/>
+    <line x1="${px(r.c)}" y1="4" x2="${px(r.c)}" y2="16" stroke="#d95926" stroke-width="3"/>
+    <line x1="${px(r.s)}" y1="4" x2="${px(r.s)}" y2="16" stroke="#3987e5" stroke-width="3"/></svg></div><div class="cv">${r.v}</div>`;
+  cmp.appendChild(row);
+});
+
+// slide engine
+const slides=[...document.querySelectorAll('.slide')],n=slides.length;let i=0;
+const dots=document.getElementById('dots');
+slides.forEach((_,k)=>{const b=document.createElement('button');if(!k)b.className='on';b.onclick=()=>go(k);dots.appendChild(b);});
+const dEls=[...dots.children];
+const count=document.getElementById('count'),hint=document.getElementById('hint');
+function go(k){i=Math.max(0,Math.min(n-1,k));
+  slides.forEach((s,x)=>s.classList.toggle('on',x===i));
+  dEls.forEach((d,x)=>d.classList.toggle('on',x===i));
+  count.textContent=String(i+1).padStart(2,'0')+' / '+String(n).padStart(2,'0');
+  hint.style.opacity=i?0:.9;}
+const next=()=>go(i+1),prev=()=>go(i-1);
+document.getElementById('next').onclick=next;
+document.getElementById('prev').onclick=prev;
+addEventListener('keydown',e=>{
+  if(['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key)){e.preventDefault();next();}
+  if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();prev();}});
+let wl=0;addEventListener('wheel',e=>{const t=Date.now();if(t-wl<700)return;if(Math.abs(e.deltaY)<24)return;wl=t;e.deltaY>0?next():prev();},{passive:true});
+let tx=0;addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)dx<0?next():prev();},{passive:true});
+</script></body></html>
